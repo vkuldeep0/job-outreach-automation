@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - main
+
+  pull_request:
+    branches:
+      - master
+      - main
+
+
+jobs:
+  test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+
+      - name: Build Docker images
+        run: docker compose build
+
+
+      - name: Start services
+        run: docker compose up -d postgres
+
+
+      - name: Wait for PostgreSQL
+        run: |
+          echo "Waiting for PostgreSQL..."
+
+          for i in {1..30}; do
+            STATUS=$(docker inspect \
+              --format='{{.State.Health.Status}}' \
+              job-outreach-postgres 2>/dev/null || true)
+
+            if [ "$STATUS" = "healthy" ]; then
+              echo "PostgreSQL is healthy."
+              exit 0
+            fi
+
+            echo "PostgreSQL status: $STATUS"
+            sleep 2
+          done
+
+          echo "PostgreSQL did not become healthy."
+          docker compose logs postgres
+          exit 1
+
+
+      - name: Run tests
+        run: docker compose run --rm test
+
+
+      - name: Show service status
+        if: always()
+        run: docker compose ps
+
+
+      - name: Show logs
+        if: failure()
+        run: docker compose logs
+
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v

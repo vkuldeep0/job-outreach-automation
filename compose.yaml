@@ -1,0 +1,82 @@
+services:
+
+  postgres:
+    image: postgres:18
+    container_name: job-outreach-postgres
+
+    environment:
+      POSTGRES_DB: outreach_db
+      POSTGRES_USER: outreach_user
+      POSTGRES_PASSWORD: outreach_password
+
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U outreach_user -d outreach_db"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+    restart: unless-stopped
+
+
+  api:
+    build: .
+
+    container_name: job-outreach-api
+
+    ports:
+      - "8000:8000"
+
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: outreach_db
+      DB_USER: outreach_user
+      DB_PASSWORD: outreach_password
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+    restart: unless-stopped
+
+
+  test:
+    build: .
+
+    command: pytest
+
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: outreach_db
+      DB_USER: outreach_user
+      DB_PASSWORD: outreach_password
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+
+volumes:
+  postgres_data:
