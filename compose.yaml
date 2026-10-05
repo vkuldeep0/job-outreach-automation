@@ -5,9 +5,9 @@ services:
     container_name: job-outreach-postgres
 
     environment:
-      POSTGRES_DB: outreach_db
-      POSTGRES_USER: outreach_user
-      POSTGRES_PASSWORD: outreach_password
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
 
     volumes:
       - postgres_data:/var/lib/postgresql
@@ -16,7 +16,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "pg_isready -U outreach_user -d outreach_db"
+          "pg_isready -U ${DB_USER} -d ${DB_NAME}"
         ]
       interval: 5s
       timeout: 5s
@@ -37,9 +37,9 @@ services:
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_NAME: outreach_db
-      DB_USER: outreach_user
-      DB_PASSWORD: outreach_password
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
 
     depends_on:
       postgres:
@@ -69,9 +69,9 @@ services:
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_NAME: outreach_db
-      DB_USER: outreach_user
-      DB_PASSWORD: outreach_password
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
 
     depends_on:
       postgres:
